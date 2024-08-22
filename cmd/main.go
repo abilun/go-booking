@@ -1,13 +1,13 @@
 package main
 
 import (
-	"booking/internal/model"
 	"booking/internal/repository/cassandra"
 	"booking/internal/service"
-	"log"
+	"booking/internal/transport/rest"
+	"fmt"
+	"net/http"
 
 	"github.com/gocql/gocql"
-	"github.com/google/uuid"
 )
 
 func main() {
@@ -21,32 +21,32 @@ func main() {
 	}
 	defer session.Close()
 
-	hotelUuid := uuid.New()
-
 	hotelRepo := cassandra.InitHotelRepository(session)
 	hotelService := service.InitHotelService(hotelRepo)
 
-	hotelService.Create(&model.Hotel{
-		HotelID: hotelUuid,
-		Name:    "Hotel Name",
-		Address: model.Address{
-			Country:  "Poland",
-			City:     "Warsaw",
-			Street:   "Marszałkowska",
-			Building: 1,
-			Entrance: 1,
-			ZipCode:  "00-000",
+	hotelHandler := rest.NewHotelHandler(hotelService)
+	mappers := []rest.Mapper{
+		{
+			Method:  "GET",
+			Path:    "/hotel/{uuid}",
+			Handler: hotelHandler.GetHotel,
 		},
-		Description: "The best hotel in the world",
-		Phone:       "123456789",
-	})
+		{
+			Method:  "DELETE",
+			Path:    "/hotel/{uuid}",
+			Handler: hotelHandler.DeleteHotel,
+		},
+		{
+			Method:  "POST",
+			Path:    "/hotel",
+			Handler: hotelHandler.CreateHotel,
+		},
+	}
+	handlerRouter := rest.NewRouter(mappers)
 
-	hotel, err := hotelRepo.GetByID(hotelUuid)
+	err = http.ListenAndServe("localhost:8080", &handlerRouter.Mux)
 	if err != nil {
+		fmt.Println("Error starting server:", err)
 		panic(err)
 	}
-
-	hotelService.Delete(hotelUuid)
-
-	log.Printf("hotel: %v\n", hotel)
 }

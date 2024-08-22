@@ -2,6 +2,7 @@ package cassandra
 
 import (
 	"booking/internal/model"
+	"log"
 
 	"github.com/gocql/gocql"
 	"github.com/google/uuid"
@@ -22,38 +23,54 @@ type CassandraHotel struct {
 	Address     CassandraAddress `cql:"address"`
 	Description string           `cql:"description"`
 	Phone       string           `cql:"phone"`
-	POIs        []CassandraPOI   `cql:"pois"`
-	Rooms       []CassandraRoom  `cql:"rooms"`
+	POIs        []gocql.UUID     `cql:"pois"`
+	Rooms       []gocql.UUID     `cql:"rooms"`
 }
 
-type CassandraPOI struct {
-	POIID       gocql.UUID `cql:"poi_id"`
-	Name        string     `cql:"name"`
-	Description string     `cql:"description"`
-}
-
-type CassandraRoom struct {
-	RoomID gocql.UUID `cql:"room_id"`
-	Number int        `cql:"number"`
-}
-
-func CassandraPOIToModel(cassandraPOI *CassandraPOI) model.POI {
-	poiUUID, _ := uuid.FromBytes(cassandraPOI.POIID.Bytes())
-
-	return model.POI{
-		POIID:       poiUUID,
-		Name:        cassandraPOI.Name,
-		Description: cassandraPOI.Description,
+func UUIDToGocqlUUID(uuid uuid.UUID) (gocql.UUID, error) {
+	gocqlUUID, err := gocql.ParseUUID(uuid.String())
+	if err != nil {
+		return gocql.UUID{}, err
 	}
+	return gocqlUUID, nil
 }
 
-func CassandraRoomToModel(cassandraRoom *CassandraRoom) model.Room {
-	roomUUID, _ := uuid.FromBytes(cassandraRoom.RoomID.Bytes())
+// Can these two functions be merged into one to
+// support both single and multiple UUIDs?
 
-	return model.Room{
-		RoomID: roomUUID,
-		Number: cassandraRoom.Number,
+func UUIDsToGocqlUUIDs(uuids []uuid.UUID) ([]gocql.UUID, error) {
+	result := make([]gocql.UUID, len(uuids))
+	var err error
+	for i, uuid := range uuids {
+		result[i], err = UUIDToGocqlUUID(uuid)
+		if err != nil {
+			return nil, err
+		}
 	}
+	return result, nil
+}
+
+func GocqlUUIDToUUID(gocqlUUID gocql.UUID) (uuid.UUID, error) {
+	convertedUUID, err := uuid.Parse(gocqlUUID.String())
+	if err != nil {
+		log.Println("Error converting Cassandra UUID to UUID:", err)
+		return uuid.Nil, err
+	}
+	return convertedUUID, nil
+}
+
+// Same here, can these two functions be merged into one?
+
+func GocqlUUIDsToUUIDs(gocqlUUIDs []gocql.UUID) ([]uuid.UUID, error) {
+	result := make([]uuid.UUID, len(gocqlUUIDs))
+	var err error
+	for i, gocqlUUID := range gocqlUUIDs {
+		result[i], err = GocqlUUIDToUUID(gocqlUUID)
+		if err != nil {
+			return nil, err
+		}
+	}
+	return result, nil
 }
 
 func CassandraHotelToModel(cassandraHotel *CassandraHotel) (*model.Hotel, error) {
@@ -62,14 +79,14 @@ func CassandraHotelToModel(cassandraHotel *CassandraHotel) (*model.Hotel, error)
 		return nil, err
 	}
 
-	pois := make([]model.POI, len(cassandraHotel.POIs))
-	for i, poi := range cassandraHotel.POIs {
-		pois[i] = CassandraPOIToModel(&poi)
+	pois, err := GocqlUUIDsToUUIDs(cassandraHotel.POIs)
+	if err != nil {
+		return nil, err
 	}
 
-	rooms := make([]model.Room, len(cassandraHotel.Rooms))
-	for i, room := range cassandraHotel.Rooms {
-		rooms[i] = CassandraRoomToModel(&room)
+	rooms, err := GocqlUUIDsToUUIDs(cassandraHotel.Rooms)
+	if err != nil {
+		return nil, err
 	}
 
 	return &model.Hotel{
@@ -96,14 +113,14 @@ func ModelToCassandraHotel(hotel *model.Hotel) (*CassandraHotel, error) {
 		return nil, err
 	}
 
-	pois := make([]CassandraPOI, len(hotel.POIs))
-	for i, poi := range hotel.POIs {
-		pois[i] = ModelToCassandraPOI(&poi)
+	pois, err := UUIDsToGocqlUUIDs(hotel.POIs)
+	if err != nil {
+		return nil, err
 	}
 
-	rooms := make([]CassandraRoom, len(hotel.Rooms))
-	for i, room := range hotel.Rooms {
-		rooms[i] = ModelToCassandraRoom(&room)
+	rooms, err := UUIDsToGocqlUUIDs(hotel.Rooms)
+	if err != nil {
+		return nil, err
 	}
 
 	return &CassandraHotel{
@@ -122,23 +139,4 @@ func ModelToCassandraHotel(hotel *model.Hotel) (*CassandraHotel, error) {
 		POIs:        pois,
 		Rooms:       rooms,
 	}, nil
-}
-
-func ModelToCassandraPOI(poi *model.POI) CassandraPOI {
-	poiID, _ := gocql.ParseUUID(poi.POIID.String())
-
-	return CassandraPOI{
-		POIID:       poiID,
-		Name:        poi.Name,
-		Description: poi.Description,
-	}
-}
-
-func ModelToCassandraRoom(room *model.Room) CassandraRoom {
-	roomID, _ := gocql.ParseUUID(room.RoomID.String())
-
-	return CassandraRoom{
-		RoomID: roomID,
-		Number: room.Number,
-	}
 }

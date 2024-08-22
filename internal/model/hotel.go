@@ -5,11 +5,11 @@ import (
 )
 
 type Hotel struct {
-	HotelID     uuid.UUID `json:"hotel_id"`
-	Name        string    `json:"name"`
-	Address     Address   `json:"address"`
-	Description string    `json:"description"`
-	Phone       string    `json:"phone"`
-	POIs        []POI     `json:"pois"`
-	Rooms       []Room    `json:"rooms"`
+	HotelID     uuid.UUID   `json:"hotel_id"`
+	Name        string      `json:"name"`
+	Address     Address     `json:"address"`
+	Description string      `json:"description"`
+	Phone       string      `json:"phone"`
+	POIs        []uuid.UUID `json:"pois"`
+	Rooms       []uuid.UUID `json:"rooms"`
 }
