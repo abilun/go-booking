@@ -80,8 +80,12 @@ func (r *CassandraHotelRepository) Create(hotel *model.Hotel) error {
 }
 
 func (r *CassandraHotelRepository) Delete(hotelUUID uuid.UUID) error {
-	uuid, _ := gocql.ParseUUID(hotelUUID.String())
-	err := r.session.Query(`DELETE FROM hotels WHERE hotel_id = ?`, uuid).Exec()
+	uuid, err := gocql.ParseUUID(hotelUUID.String())
+	if err != nil {
+		return err
+	}
+
+	err = r.session.Query(`DELETE FROM hotels WHERE hotel_id = ?`, uuid).Exec()
 	if err != nil {
 		return err
 	}
