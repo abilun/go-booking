@@ -1,8 +1,7 @@
 package repository
 
 import (
-	"booking/internal/model"
-
+	"booking/internal/hotels/model"
 	"github.com/google/uuid"
 )
 

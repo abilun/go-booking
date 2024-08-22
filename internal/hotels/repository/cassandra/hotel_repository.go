@@ -1,7 +1,8 @@
 package cassandra
 
 import (
-	"booking/internal/model"
+	"booking/internal/hotels/model"
+	cassandraInfra "booking/internal/infra/cassandra"
 	"log"
 
 	"github.com/gocql/gocql"
@@ -21,7 +22,7 @@ func (r *HotelRepository) GetByID(hotelUUID uuid.UUID) (*model.Hotel, error) {
 
 	var cassandraHotel CassandraHotel
 
-	gocqlUUID, err := UUIDToGocqlUUID(hotelUUID)
+	gocqlUUID, err := cassandraInfra.UUIDToGocqlUUID(hotelUUID)
 	if err != nil {
 		return nil, err
 	}
@@ -79,7 +80,7 @@ func (r *HotelRepository) Create(hotel *model.Hotel) error {
 }
 
 func (r *HotelRepository) Delete(hotelUUID uuid.UUID) error {
-	gocqlUUID, err := UUIDToGocqlUUID(hotelUUID)
+	gocqlUUID, err := cassandraInfra.UUIDToGocqlUUID(hotelUUID)
 	if err != nil {
 		return err
 	}

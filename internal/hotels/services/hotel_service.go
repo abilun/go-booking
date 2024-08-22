@@ -1,8 +1,8 @@
-package service
+package services
 
 import (
-	"booking/internal/model"
-	"booking/internal/repository"
+	"booking/internal/hotels/model"
+	"booking/internal/hotels/repository"
 	"errors"
 
 	"github.com/google/uuid"
