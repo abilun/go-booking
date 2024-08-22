@@ -8,15 +8,15 @@ import (
 	"github.com/google/uuid"
 )
 
-type CassandraHotelRepository struct {
+type HotelRepository struct {
 	session *gocql.Session
 }
 
-func InitHotelRepository(session *gocql.Session) *CassandraHotelRepository {
-	return &CassandraHotelRepository{session: session}
+func InitHotelRepository(session *gocql.Session) *HotelRepository {
+	return &HotelRepository{session: session}
 }
 
-func (r *CassandraHotelRepository) GetByID(hotelUUID uuid.UUID) (*model.Hotel, error) {
+func (r *HotelRepository) GetByID(hotelUUID uuid.UUID) (*model.Hotel, error) {
 	var hotel *model.Hotel
 
 	var cassandraHotel CassandraHotel
@@ -55,7 +55,7 @@ func (r *CassandraHotelRepository) GetByID(hotelUUID uuid.UUID) (*model.Hotel, e
 	return hotel, nil
 }
 
-func (r *CassandraHotelRepository) Create(hotel *model.Hotel) error {
+func (r *HotelRepository) Create(hotel *model.Hotel) error {
 	cassandraHotel, err := ModelToCassandraHotel(hotel)
 	if err != nil {
 		return err
@@ -78,7 +78,7 @@ func (r *CassandraHotelRepository) Create(hotel *model.Hotel) error {
 	return nil
 }
 
-func (r *CassandraHotelRepository) Delete(hotelUUID uuid.UUID) error {
+func (r *HotelRepository) Delete(hotelUUID uuid.UUID) error {
 	gocqlUUID, err := UUIDToGocqlUUID(hotelUUID)
 	if err != nil {
 		return err
