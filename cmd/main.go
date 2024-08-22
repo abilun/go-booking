@@ -3,7 +3,7 @@ package main
 import (
 	"booking/internal/hotels/repository/cassandra"
 	"booking/internal/hotels/services"
-	rest2 "booking/internal/hotels/webapi"
+	hotelsWebApi "booking/internal/hotels/webapi"
 	"booking/internal/infra/webapi"
 	"fmt"
 	"net/http"
@@ -25,7 +25,7 @@ func main() {
 	hotelRepo := cassandra.InitHotelRepository(session)
 	hotelService := services.InitHotelService(hotelRepo)
 
-	hotelHandler := rest2.NewHotelHandler(hotelService)
+	hotelHandler := hotelsWebApi.NewHotelHandler(hotelService)
 	mappers := []webapi.Mapper{
 		{
 			Method:  "GET",
