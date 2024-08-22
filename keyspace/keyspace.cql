@@ -15,6 +15,6 @@ CREATE TABLE IF NOT EXISTS hotel.hotels (
     address frozen<address>,
     description text,
     phone text,
-    pois list<text>,
-    rooms list<text>
+    pois list<uuid>,
+    rooms list<uuid>
 );
