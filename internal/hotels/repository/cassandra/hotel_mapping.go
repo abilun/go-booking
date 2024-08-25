@@ -1,9 +1,8 @@
 package cassandra
 
 import (
-	"booking/internal/model"
-	"log"
-
+	model2 "booking/internal/hotels/model"
+	cassandraInfra "booking/internal/infra/cassandra"
 	"github.com/gocql/gocql"
 	"github.com/google/uuid"
 )
@@ -27,72 +26,31 @@ type CassandraHotel struct {
 	Rooms       []gocql.UUID     `cql:"rooms"`
 }
 
-func UUIDToGocqlUUID(uuid uuid.UUID) (gocql.UUID, error) {
-	gocqlUUID, err := gocql.ParseUUID(uuid.String())
-	if err != nil {
-		return gocql.UUID{}, err
-	}
-	return gocqlUUID, nil
-}
-
 // Can these two functions be merged into one to
 // support both single and multiple UUIDs?
 
-func UUIDsToGocqlUUIDs(uuids []uuid.UUID) ([]gocql.UUID, error) {
-	result := make([]gocql.UUID, len(uuids))
-	var err error
-	for i, uuid := range uuids {
-		result[i], err = UUIDToGocqlUUID(uuid)
-		if err != nil {
-			return nil, err
-		}
-	}
-	return result, nil
-}
-
-func GocqlUUIDToUUID(gocqlUUID gocql.UUID) (uuid.UUID, error) {
-	convertedUUID, err := uuid.Parse(gocqlUUID.String())
-	if err != nil {
-		log.Println("Error converting Cassandra UUID to UUID:", err)
-		return uuid.Nil, err
-	}
-	return convertedUUID, nil
-}
-
 // Same here, can these two functions be merged into one?
 
-func GocqlUUIDsToUUIDs(gocqlUUIDs []gocql.UUID) ([]uuid.UUID, error) {
-	result := make([]uuid.UUID, len(gocqlUUIDs))
-	var err error
-	for i, gocqlUUID := range gocqlUUIDs {
-		result[i], err = GocqlUUIDToUUID(gocqlUUID)
-		if err != nil {
-			return nil, err
-		}
-	}
-	return result, nil
-}
-
-func CassandraHotelToModel(cassandraHotel *CassandraHotel) (*model.Hotel, error) {
+func CassandraHotelToModel(cassandraHotel *CassandraHotel) (*model2.Hotel, error) {
 	hotelUUID, err := uuid.FromBytes(cassandraHotel.HotelID.Bytes())
 	if err != nil {
 		return nil, err
 	}
 
-	pois, err := GocqlUUIDsToUUIDs(cassandraHotel.POIs)
+	pois, err := cassandraInfra.GocqlUUIDsToUUIDs(cassandraHotel.POIs)
 	if err != nil {
 		return nil, err
 	}
 
-	rooms, err := GocqlUUIDsToUUIDs(cassandraHotel.Rooms)
+	rooms, err := cassandraInfra.GocqlUUIDsToUUIDs(cassandraHotel.Rooms)
 	if err != nil {
 		return nil, err
 	}
 
-	return &model.Hotel{
+	return &model2.Hotel{
 		HotelID: hotelUUID,
 		Name:    cassandraHotel.Name,
-		Address: model.Address{
+		Address: model2.Address{
 			Country:  cassandraHotel.Address.Country,
 			City:     cassandraHotel.Address.City,
 			Street:   cassandraHotel.Address.Street,
@@ -107,18 +65,18 @@ func CassandraHotelToModel(cassandraHotel *CassandraHotel) (*model.Hotel, error)
 	}, nil
 }
 
-func ModelToCassandraHotel(hotel *model.Hotel) (*CassandraHotel, error) {
+func ModelToCassandraHotel(hotel *model2.Hotel) (*CassandraHotel, error) {
 	hotelID, err := gocql.ParseUUID(hotel.HotelID.String())
 	if err != nil {
 		return nil, err
 	}
 
-	pois, err := UUIDsToGocqlUUIDs(hotel.POIs)
+	pois, err := cassandraInfra.UUIDsToGocqlUUIDs(hotel.POIs)
 	if err != nil {
 		return nil, err
 	}
 
-	rooms, err := UUIDsToGocqlUUIDs(hotel.Rooms)
+	rooms, err := cassandraInfra.UUIDsToGocqlUUIDs(hotel.Rooms)
 	if err != nil {
 		return nil, err
 	}

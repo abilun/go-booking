@@ -1,9 +1,10 @@
 package main
 
 import (
-	"booking/internal/repository/cassandra"
-	"booking/internal/service"
-	"booking/internal/transport/rest"
+	"booking/internal/hotels/repository/cassandra"
+	"booking/internal/hotels/services"
+	hotelsWebApi "booking/internal/hotels/webapi"
+	"booking/internal/infra/webapi"
 	"fmt"
 	"net/http"
 
@@ -22,10 +23,10 @@ func main() {
 	defer session.Close()
 
 	hotelRepo := cassandra.InitHotelRepository(session)
-	hotelService := service.InitHotelService(hotelRepo)
+	hotelService := services.InitHotelService(hotelRepo)
 
-	hotelHandler := rest.NewHotelHandler(hotelService)
-	mappers := []rest.Mapper{
+	hotelHandler := hotelsWebApi.NewHotelHandler(hotelService)
+	mappers := []webapi.Mapper{
 		{
 			Method:  "GET",
 			Path:    "/hotel/{uuid}",
@@ -42,7 +43,7 @@ func main() {
 			Handler: hotelHandler.CreateHotel,
 		},
 	}
-	handlerRouter := rest.NewRouter(mappers)
+	handlerRouter := webapi.NewRouter(mappers)
 
 	err = http.ListenAndServe("localhost:8080", &handlerRouter.Mux)
 	if err != nil {

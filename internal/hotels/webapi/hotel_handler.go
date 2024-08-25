@@ -1,8 +1,8 @@
-package rest
+package webapi
 
 import (
-	"booking/internal/model"
-	"booking/internal/service"
+	"booking/internal/hotels/model"
+	"booking/internal/hotels/services"
 	"encoding/json"
 	"log"
 	"net/http"
@@ -11,10 +11,10 @@ import (
 )
 
 type HotelHandler struct {
-	HotelService service.HotelService
+	HotelService services.HotelService
 }
 
-func NewHotelHandler(service *service.HotelService) *HotelHandler {
+func NewHotelHandler(service *services.HotelService) *HotelHandler {
 	return &HotelHandler{
 		HotelService: *service,
 	}
